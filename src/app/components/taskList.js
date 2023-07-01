@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import { Disclosure } from "@headlessui/react";
 
 import TodoContext from "../context/todo";
@@ -8,13 +8,60 @@ import TodoContext from "../context/todo";
 const TaskList = () => {
   const { reloadCount, setTasks, tasks, completeTask, editTask, deleteTask } =
     useContext(TodoContext);
+  const [ogTasks, setOGTasks] = useState([]);
+  const [searchTasksInput, setSearchTasksInput] = useState("");
 
   useEffect(() => {
-    const data = axios.get("/api/todos").then(({ data }) => setTasks(data));
+    const data = axios.get("/api/todos").then(({ data }) => {
+      setTasks(data);
+      setOGTasks(data);
+    });
   }, [reloadCount]);
+
+  const searchTasks = (e) => {
+    const { value } = e.currentTarget;
+    setSearchTasksInput(value);
+    let newSearchTasks = [...ogTasks];
+    newSearchTasks = newSearchTasks.filter((task) => {
+      return task.task.toLowerCase().includes(value.toLowerCase());
+    });
+    if (value.length === 0) {
+      setTasks(ogTasks);
+    } else {
+      setTasks(newSearchTasks);
+    }
+  };
+  const cancelSearch = (e) => {
+    setTasks(ogTasks);
+    setSearchTasksInput("");
+  };
 
   return (
     <div className="my-4 h-full">
+      <div className="flex items-center ps-2 pe-4 pb-4 w-full">
+        <input
+          type="text"
+          placeholder="Search Task..."
+          className="border rounded-lg px-3 py-1 w-full"
+          onChange={searchTasks}
+          value={searchTasksInput}
+        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          className="w-6 h-6"
+          onClick={cancelSearch}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </div>
       {tasks.map((task) => {
         return (
           <div key={task._id} className={"border rounded-2xl mb-4 ms-2 me-4"}>
